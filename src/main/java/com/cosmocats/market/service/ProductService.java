@@ -4,6 +4,7 @@ import com.cosmocats.market.domain.Product;
 import com.cosmocats.market.exception.ProductNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,9 +18,9 @@ public class ProductService {
     private final AtomicLong idGenerator = new AtomicLong();
 
     public ProductService() {
-        create(Product.builder().name("Anti-gravity Star Yarn").description("Floats in zero-g").price(19.99).categoryId(1L).build());
-        create(Product.builder().name("Galaxy Milk").description("Milk from the Milky Way").price(4.50).categoryId(2L).build());
-        create(Product.builder().name("Comet Laser Pointer").description("Faster than light chase").price(12.00).categoryId(1L).build());
+        create(Product.builder().name("Anti-gravity Star Yarn").description("Floats in zero-g").price(new BigDecimal("19.99")).categoryId(1L).build());
+        create(Product.builder().name("Galaxy Milk").description("Milk from the Milky Way").price(new BigDecimal("4.50")).categoryId(2L).build());
+        create(Product.builder().name("Comet Laser Pointer").description("Faster than light chase").price(new BigDecimal("12.00")).categoryId(1L).build());
     }
 
     public Product create(Product product) {
