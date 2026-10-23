@@ -7,6 +7,8 @@ import com.cosmocats.market.dto.ProductResponseDto;
 import com.cosmocats.market.mapper.ProductMapper;
 import com.cosmocats.market.service.ProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +27,11 @@ public class ProductController {
 
     @GetMapping
     public PageResponse<ProductResponseDto> getAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "Page must be 0 or greater") int page,
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1, message = "Size must be at least 1")
+            @Max(value = 100, message = "Size must be at most 100") int size){
 
         List<ProductResponseDto> content = productService.getAll(page, size).stream()
                 .map(productMapper::toDto)

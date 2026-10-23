@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.net.URI;
 import java.util.List;
@@ -47,5 +48,28 @@ public class GlobalExceptionHandler {
         problem.setTitle("Product not found");
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ProblemDetail handleParamValidation(HandlerMethodValidationException ex,
+                                               HttpServletRequest request) {
+        List<Map<String, String>> errors = ex.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> Map.of(
+                                "field", result.getMethodParameter().getParameterName(),
+                                "message", String.valueOf(error.getDefaultMessage()))))
+                .toList();
+
+        String detail = errors.stream()
+                .map(e -> "Parameter '" + e.get("field") + "': " + e.get("message"))
+                .collect(Collectors.joining("; "));
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+        problem.setType(URI.create("https://cosmo-cats.market/errors/validation"));
+        problem.setTitle("Validation failed");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("errors", errors);
+        return problem;
+
     }
 }

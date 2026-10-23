@@ -5,16 +5,16 @@ import com.cosmocats.market.exception.ProductNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class ProductService {
 
-    private final Map<Long, Product> products = new HashMap<>();
+    private final Map<Long, Product> products = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong();
 
     public ProductService() {
@@ -31,7 +31,9 @@ public class ProductService {
     }
 
     public List<Product> getAll(int page, int size) {
-        List<Product> all = new ArrayList<>(products.values());
+        List<Product> all = products.values().stream()
+                .sorted(Comparator.comparing(Product::getId))
+                .toList();
         int from = page * size;
         int to = Math.min(from + size, all.size());
         if (from >= all.size()) {
