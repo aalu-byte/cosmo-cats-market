@@ -61,6 +61,10 @@ public class ProductService {
     }
 
     public void delete(Long id) {
-        products.remove(id);
+        if(products.remove(id)==null) {
+            throw new ProductNotFoundException(id);
+
+        }
+
     }
 }
