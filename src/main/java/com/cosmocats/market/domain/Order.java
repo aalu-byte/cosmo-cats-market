@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Order {
     private Long id;
-    private List<CartItem> items;
+    private List<OrderItem> items;
     private BigDecimal totalPrice;
     private OrderStatus status;
     private LocalDateTime createdAt;
