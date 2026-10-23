@@ -8,8 +8,10 @@ import com.cosmocats.market.mapper.ProductMapper;
 import com.cosmocats.market.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -41,9 +43,10 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductResponseDto create(@Valid @RequestBody ProductRequestDto request) {
+    public ResponseEntity<ProductResponseDto> create(@Valid @RequestBody ProductRequestDto request) {
         Product created = productService.create(productMapper.toDomain(request));
-        return productMapper.toDto(created);
+        URI location= URI.create("/api/products/" + created.getId());
+        return ResponseEntity.created(location).body(productMapper.toDto(created));
     }
 
     @PutMapping("/{id}")
