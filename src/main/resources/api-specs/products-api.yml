@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: Cosmo Cats Intergalactic Marketplace API
+  description: CRUD API for products of the Cosmo Cats marketplace.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+tags:
+  - name: Products
+    description: Operations with products
+
+paths:
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Get a page of products
+      operationId: getProducts
+      parameters:
+        - name: page
+          in: query
+          description: Page number (starts from 0)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of products per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Page of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+
+    post:
+      tags: [Products]
+      summary: Create a new product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Product id
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+
+    get:
+      tags: [Products]
+      summary: Get product by id
+      operationId: getProductById
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Products]
+      summary: Update product
+      operationId: updateProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Products]
+      summary: Delete product
+      operationId: deleteProduct
+      responses:
+        '204':
+          description: Product deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    ProductRequest:
+      type: object
+      required: [name, price, categoryId]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Anti-gravity Star Yarn
+        description:
+          type: string
+          maxLength: 500
+          example: Floats in zero-g
+        price:
+          type: number
+          format: double
+          exclusiveMinimum: true
+          minimum: 0
+          example: 19.99
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Anti-gravity Star Yarn
+        description:
+          type: string
+          example: Floats in zero-g
+        price:
+          type: number
+          format: double
+          example: 19.99
+        categoryId:
+          type: integer
+          format: int64
+          example: 1
+
+    ProductPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          example: 3
+        totalPages:
+          type: integer
+          example: 1
+
+    ProblemDetail:
+      type: object
+      description: Error response according to RFC 9457
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://cosmo-cats.market/errors/validation
+        title:
+          type: string
+          example: Validation failed
+        status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: "Field 'price': Price must be greater than 0"
+        instance:
+          type: string
+          example: /api/products
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: price
+              message:
+                type: string
+                example: Price must be greater than 0
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Product not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: https://cosmo-cats.market/errors/not-found
+            title: Product not found
+            status: 404
+            detail: Product with id 999 not found
+            instance: /api/products/999
