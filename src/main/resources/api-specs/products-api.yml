@@ -138,7 +138,7 @@ components:
           example: Floats in zero-g
         price:
           type: number
-          format: double
+          multipleOf: 0.01
           exclusiveMinimum: true
           minimum: 0
           example: 19.99
@@ -163,7 +163,7 @@ components:
           example: Floats in zero-g
         price:
           type: number
-          format: double
+          multipleOf: 0.01
           example: 19.99
         categoryId:
           type: integer

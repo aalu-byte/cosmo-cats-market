@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,8 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 public class Order {
     private Long id;
-    private List<CartItem> items;
-    private Double totalPrice;
-    private String status;
+    private List<OrderItem> items;
+    private BigDecimal totalPrice;
+    private OrderStatus status;
     private LocalDateTime createdAt;
 }

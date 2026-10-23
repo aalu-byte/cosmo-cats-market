@@ -4,22 +4,23 @@ import com.cosmocats.market.domain.Product;
 import com.cosmocats.market.exception.ProductNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class ProductService {
 
-    private final Map<Long, Product> products = new HashMap<>();
+    private final Map<Long, Product> products = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong();
 
     public ProductService() {
-        create(Product.builder().name("Anti-gravity Star Yarn").description("Floats in zero-g").price(19.99).categoryId(1L).build());
-        create(Product.builder().name("Galaxy Milk").description("Milk from the Milky Way").price(4.50).categoryId(2L).build());
-        create(Product.builder().name("Comet Laser Pointer").description("Faster than light chase").price(12.00).categoryId(1L).build());
+        create(Product.builder().name("Anti-gravity Star Yarn").description("Floats in zero-g").price(new BigDecimal("19.99")).categoryId(1L).build());
+        create(Product.builder().name("Galaxy Milk").description("Milk from the Milky Way").price(new BigDecimal("4.50")).categoryId(2L).build());
+        create(Product.builder().name("Comet Laser Pointer").description("Faster than light chase").price(new BigDecimal("12.00")).categoryId(1L).build());
     }
 
     public Product create(Product product) {
@@ -30,7 +31,9 @@ public class ProductService {
     }
 
     public List<Product> getAll(int page, int size) {
-        List<Product> all = new ArrayList<>(products.values());
+        List<Product> all = products.values().stream()
+                .sorted(Comparator.comparing(Product::getId))
+                .toList();
         int from = page * size;
         int to = Math.min(from + size, all.size());
         if (from >= all.size()) {
@@ -61,6 +64,10 @@ public class ProductService {
     }
 
     public void delete(Long id) {
-        products.remove(id);
+        if(products.remove(id)==null) {
+            throw new ProductNotFoundException(id);
+
+        }
+
     }
 }
