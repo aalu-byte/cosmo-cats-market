@@ -13,6 +13,7 @@ public record ProductRequestDto(
         @CosmicWordCheck
         String name,
 
+        @Size(max = 500, message = "Description must be at most 500 characters")
         String description,
 
         @NotNull(message = "Price is required")
@@ -21,6 +22,7 @@ public record ProductRequestDto(
         BigDecimal price,
 
         @NotNull(message = "Category id is required")
+        @Positive(message = "Category id must be positive")
         Long categoryId
 ) {
 }
