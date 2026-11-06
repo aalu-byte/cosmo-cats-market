@@ -2,6 +2,7 @@ package com.cosmocats.market.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import javax.management.StringValueExp;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +117,26 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred. Please try again later.");
         problem.setType(URI.create("https://cosmo-cats.market/errors/internal"));
         problem.setTitle("Internal server error");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ProblemDetail handleCategoryNotFound(CategoryNotFoundException ex,
+                                                HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setType(URI.create("https://cosmo-cats.market/errors/not-found"));
+        problem.setTitle("Category not found");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleConflict(DataIntegrityViolationException ex,
+                                        HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "Product with this name already exists in this category");
+        problem.setType(URI.create("https://cosmo-cats.market/errors/conflict"));
+        problem.setTitle("Conflict");
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
     }

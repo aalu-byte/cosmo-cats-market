@@ -18,13 +18,14 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 ext {
-    // Мінімальне покриття рядків для КОЖНОГО файлу (0.8 = 80%)
+    // Мінімальне покриття рядків 80%)
     minimumCoveragePerFile = 0.8
     filesExcludedFromCoverage = [
             "**/*MarketApplication.*",
             "**/config/*Configuration.*",
-            // доменна модель — лише дані без логіки (Lombok-класи та enum)
-            "**/domain/*.*"
+            // (Lombok-класи та enum)
+            "**/domain/*.*",
+            "**/repository/entity/*.*"
     ]
 }
 
