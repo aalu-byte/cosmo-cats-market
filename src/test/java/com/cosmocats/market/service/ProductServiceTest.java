@@ -1,11 +1,14 @@
 
 package com.cosmocats.market.service;
 
+import com.cosmocats.market.domain.OrderStatus;
 import com.cosmocats.market.domain.Product;
+import com.cosmocats.market.dto.TopSoldProductDto;
 import com.cosmocats.market.exception.CategoryNotFoundException;
 import com.cosmocats.market.exception.ProductNotFoundException;
 import com.cosmocats.market.repository.CategoryRepository;
 import com.cosmocats.market.repository.ProductRepository;
+import com.cosmocats.market.repository.TopProductProjection;
 import com.cosmocats.market.repository.entity.CategoryEntity;
 import com.cosmocats.market.repository.entity.ProductEntity;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
@@ -24,10 +28,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
     class ProductServiceTest {
@@ -184,5 +186,18 @@ import static org.mockito.Mockito.verify;
                 .isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository, never()).deleteById(any());
+    }
+    @Test
+    void testGetTopSold() {
+        TopProductProjection projection = mock(TopProductProjection.class);
+        when(projection.getProductId()).thenReturn(1L);
+        when(projection.getProductName()).thenReturn("Star Yarn");
+        when(projection.getTotalQuantity()).thenReturn(7L);
+        when(productRepository.findTopSoldProducts(OrderStatus.CANCELLED, PageRequest.of(0, 3)))
+                .thenReturn(List.of(projection));
+
+        List<TopSoldProductDto> top = productService.getTopSold(3);
+
+        assertThat(top).containsExactly(new TopSoldProductDto(1L, "Star Yarn", 7L));
     }
 }
