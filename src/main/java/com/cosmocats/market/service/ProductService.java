@@ -1,6 +1,8 @@
 package com.cosmocats.market.service;
 
+import com.cosmocats.market.domain.OrderStatus;
 import com.cosmocats.market.domain.Product;
+import com.cosmocats.market.dto.TopSoldProductDto;
 import com.cosmocats.market.exception.ProductNotFoundException;
 import com.cosmocats.market.exception.CategoryNotFoundException;
 import com.cosmocats.market.repository.CategoryRepository;
@@ -81,5 +83,11 @@ public class ProductService {
                 .price(entity.getPrice())
                 .categoryId(entity.getCategory().getId())
                 .build();
+    }
+    public List<TopSoldProductDto> getTopSold(int limit) {
+        return productRepository.findTopSoldProducts(OrderStatus.CANCELLED, PageRequest.of(0, limit))
+                .stream()
+                .map(p -> new TopSoldProductDto(p.getProductId(), p.getProductName(), p.getTotalQuantity()))
+                .toList();
     }
 }
