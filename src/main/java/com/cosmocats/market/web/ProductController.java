@@ -4,6 +4,7 @@ import com.cosmocats.market.domain.Product;
 import com.cosmocats.market.dto.PageResponse;
 import com.cosmocats.market.dto.ProductRequestDto;
 import com.cosmocats.market.dto.ProductResponseDto;
+import com.cosmocats.market.dto.TopSoldProductDto;
 import com.cosmocats.market.mapper.ProductMapper;
 import com.cosmocats.market.service.ProductService;
 import jakarta.validation.Valid;
@@ -66,5 +67,12 @@ public class ProductController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         productService.delete(id);
+    }
+    @GetMapping("/top-sold")
+    public List<TopSoldProductDto> getTopSold(
+            @RequestParam(defaultValue = "5")
+            @Min(value = 1, message = "Limit must be at least 1")
+            @Max(value = 50, message = "Limit must be at most 50") int limit) {
+        return productService.getTopSold(limit);
     }
 }

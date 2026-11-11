@@ -1,73 +1,93 @@
 package com.cosmocats.market.service;
 
+import com.cosmocats.market.domain.OrderStatus;
 import com.cosmocats.market.domain.Product;
+import com.cosmocats.market.dto.TopSoldProductDto;
 import com.cosmocats.market.exception.ProductNotFoundException;
+import com.cosmocats.market.exception.CategoryNotFoundException;
+import com.cosmocats.market.repository.CategoryRepository;
+import com.cosmocats.market.repository.ProductRepository;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.util.Comparator;
+import com.cosmocats.market.repository.entity.CategoryEntity;
+import com.cosmocats.market.repository.entity.ProductEntity;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
 
-    private final Map<Long, Product> products = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong();
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ProductService() {
-        create(Product.builder().name("Anti-gravity Star Yarn").description("Floats in zero-g").price(new BigDecimal("19.99")).categoryId(1L).build());
-        create(Product.builder().name("Galaxy Milk").description("Milk from the Milky Way").price(new BigDecimal("4.50")).categoryId(2L).build());
-        create(Product.builder().name("Comet Laser Pointer").description("Faster than light chase").price(new BigDecimal("12.00")).categoryId(1L).build());
-    }
 
+    @Transactional
     public Product create(Product product) {
-        Long id = idGenerator.incrementAndGet();
-        product.setId(id);
-        products.put(id, product);
-        return product;
+        ProductEntity entity = new ProductEntity();
+        fillEntity(entity, product);
+        return toDomain(productRepository.save(entity));
     }
 
     public List<Product> getAll(int page, int size) {
-        List<Product> all = products.values().stream()
-                .sorted(Comparator.comparing(Product::getId))
-                .toList();
-        int from = page * size;
-        int to = Math.min(from + size, all.size());
-        if (from >= all.size()) {
-            return List.of();
-        }
-        return all.subList(from, to);
+        return productRepository.findAll(PageRequest.of(page, size, Sort.by("id")))
+                .map(this::toDomain)
+                .getContent();
+
     }
 
     public long count() {
-        return products.size();
+        return productRepository.count();
     }
 
     public Product getById(Long id) {
-        Product product = products.get(id);
-        if (product == null) {
-            throw new ProductNotFoundException(id);
-        }
-        return product;
+        return toDomain(findEntity(id));
     }
-
+    @Transactional
     public Product update(Long id, Product updated) {
-        Product existing = getById(id);
-        existing.setName(updated.getName());
-        existing.setDescription(updated.getDescription());
-        existing.setPrice(updated.getPrice());
-        existing.setCategoryId(updated.getCategoryId());
-        return existing;
+        ProductEntity entity = findEntity(id);
+        fillEntity(entity, updated);
+        return toDomain(entity);
     }
 
     public void delete(Long id) {
-        if(products.remove(id)==null) {
+        if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException(id);
-
         }
+        productRepository.deleteById(id);
 
+    }
+    private ProductEntity findEntity(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+    }
+
+    private void fillEntity(ProductEntity entity, Product product) {
+        CategoryEntity category = categoryRepository.findById(product.getCategoryId())
+                .orElseThrow(() -> new CategoryNotFoundException(product.getCategoryId()));
+        entity.setName(product.getName());
+        entity.setDescription(product.getDescription());
+        entity.setPrice(product.getPrice());
+        entity.setCategory(category);
+    }
+
+    private Product toDomain(ProductEntity entity) {
+        return Product.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .price(entity.getPrice())
+                .categoryId(entity.getCategory().getId())
+                .build();
+    }
+    public List<TopSoldProductDto> getTopSold(int limit) {
+        return productRepository.findTopSoldProducts(OrderStatus.CANCELLED, PageRequest.of(0, limit))
+                .stream()
+                .map(p -> new TopSoldProductDto(p.getProductId(), p.getProductName(), p.getTotalQuantity()))
+                .toList();
     }
 }

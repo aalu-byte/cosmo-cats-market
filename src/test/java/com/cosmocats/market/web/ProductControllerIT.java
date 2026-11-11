@@ -1,6 +1,8 @@
 package com.cosmocats.market.web;
 
 import com.cosmocats.market.domain.Product;
+import com.cosmocats.market.dto.TopSoldProductDto;
+import com.cosmocats.market.exception.CategoryNotFoundException;
 import com.cosmocats.market.exception.ProductNotFoundException;
 import com.cosmocats.market.mapper.ProductMapper;
 import com.cosmocats.market.service.ProductService;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -324,5 +327,39 @@ class ProductControllerIT {
         mockMvc.perform(get("/api/unknown"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
+    }
+    @Test
+    void create_unknownCategory_returns404() throws Exception {
+        when(productService.create(any(Product.class))).thenThrow(new CategoryNotFoundException(99L));
+
+        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Category not found"));
+    }
+
+    @Test
+    void create_duplicateName_returns409() throws Exception {
+        when(productService.create(any(Product.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("Conflict"));
+    }
+    @Test
+    void getTopSold_returnsList() throws Exception {
+        when(productService.getTopSold(5))
+                .thenReturn(List.of(new TopSoldProductDto(1L, "Star Yarn", 7L)));
+
+        mockMvc.perform(get(URL + "/top-sold"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productName").value("Star Yarn"))
+                .andExpect(jsonPath("$[0].totalQuantity").value(7));
+    }
+
+    @Test
+    void getTopSold_zeroLimit_returns400() throws Exception {
+        mockMvc.perform(get(URL + "/top-sold").param("limit", "0"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-seed-categories
+      author: andriana
+      changes:
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueSequenceNext: category_seq
+              - column:
+                  name: name
+                  value: Cosmic Toys
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: name
+                  value: Space Food
+              - column:
+                  name: id
+                  valueSequenceNext: category_seq

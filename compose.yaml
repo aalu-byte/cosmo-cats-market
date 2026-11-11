@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: cosmocats-db
+    environment:
+      POSTGRES_DB: cosmocats
+      POSTGRES_USER: cosmo
+      POSTGRES_PASSWORD: cosmo
+    ports:
+      - "15432:5432"
